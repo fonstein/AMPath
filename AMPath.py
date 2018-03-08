@@ -39,6 +39,11 @@ def getSubObject():
     except Exception as e:
         FreeCAD.Console.PrintError("No object selected")
 
+
 sub = SubObject(getSubObject())
-sub.sampleSubObject(10, 10, 0.0)
-#sub.displaySampling()
+if sub.subObject != None:
+    sub.sampleSubObject(10, 10, 0.0)
+    #sub.displaySampling()
+else:
+    pass
+    #FreeCAD.Console.PrintError("No object selected")

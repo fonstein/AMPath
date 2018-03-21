@@ -70,13 +70,12 @@ class Sampling(object):
                     u_calibrated = True
                     FreeCAD.Console.PrintMessage("\nu is calibrated")
 
-
     def sampleSubObject(self):
         pRange = self.subObject.ParameterRange
-        umin = int(pRange[0])
-        umax = int(pRange[1])
-        vmin = int(pRange[2])
-        vmax = int(pRange[3])
+        umin = pRange[0]
+        umax = pRange[1]
+        vmin = pRange[2]
+        vmax = pRange[3]
 
         self.calibrate_step()
 

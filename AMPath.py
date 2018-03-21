@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 import Sampling
-#import Path
+import Path
 
 
 class SubObject(object):
@@ -24,6 +24,9 @@ def getSubObject():
     try:
         selected = FreeCADGui.Selection.getSelectionEx()
         subObject = selected[0].SubObjects[0]
+
+        FreeCADGui.Selection.clearSelection()
+
         return subObject
     except Exception as e:
         FreeCAD.Console.PrintError("\nNo object selected")
@@ -39,10 +42,13 @@ def main():
 
     # Try to sample subObject
     if sub.subObject != None:
+        #input: desired step in mm
         ustep = 10.0
         vstep = 10.0
-        tolerance = 0.0
+        tolerance = 10.0
         sub.sampling = Sampling.sample(sub.subObject, ustep, vstep, tolerance)
+
+        #sub.path = Path.generate_path(sub.subObject, sub.sampling)
 
     FreeCAD.Console.PrintMessage("\n==== DONE ====\n")
 

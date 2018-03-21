@@ -1,18 +1,22 @@
 import FreeCAD
 import FreeCADGui
 import Part
-import Draft
 import math
 import numpy as np
 
+"""This file has to be rewritten after reorganization in the other files.
+   This file should only receive a point cloud and no subObject"""
+
+def generate_path(point_cloud):
+    p = Path(point_cloud)
+    return p.path
 
 class Path(object):
     dist_matrix = {}
     path = []
 
-    def __init__(self, subObject, sampling):
-        self.subObject = subObject
-        self.sampling = sampling
+    def __init__(self, point_cloud):
+        self.point_cloud = point_cloud
 
         self.mk_matrix()
         self.path.append(self.subObject.sampling[0])
@@ -48,10 +52,15 @@ class Path(object):
                 D[j,i] = D[i,j]
         self.dist_matrix = D
 
-def generate_path(subObject, sampling):
-    p = Path(subObject, sampling)
-    return p.path
 
-        #Implement greedy algorithm here
 
-        #FreeCAD.Console.PrintMessage("Path: %s" % (self.path))
+#Make B-spline
+"""
+points = sub.sampling[:31]
+for vec in reversed(sub.sampling[32:64]):
+  points.append(vec)
+points += sub.sampling[64:96]
+for vec in reversed(sub.sampling[96:128]):
+  points.append(vec)
+Draft.makeBSpline(points,closed=False,face=False,support=None)
+"""

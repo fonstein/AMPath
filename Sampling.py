@@ -6,8 +6,8 @@ import math
 import numpy as np
 import random
 
-def sample(subObject, ustep, vstep, tolerance):
-    samples = Sampling(subObject, ustep, vstep, tolerance)
+def sample(subObject, ustep, vstep, tolerance, display):
+    samples = Sampling(subObject, ustep, vstep, tolerance, display)
     return samples.sampling
 
 class Sample(object):
@@ -23,16 +23,19 @@ class Sample(object):
 
 class Sampling(object):
     sampling = []
-    def __init__(self, subObject, udist, vdist, tolerance):
+    def __init__(self, subObject, udist, vdist, tolerance, display):
         self.subObject = subObject
         self.udist = udist
         self.vdist = vdist
         self.ustep = udist
         self.vstep = vdist
         self.tolerance = tolerance
+        self.display = display
 
         self.sampleSubObject()
-        self.displaySampling()
+
+        if display:
+            self.displaySampling()
 
     def calibrate_step(self):
         dummy_list = []

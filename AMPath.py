@@ -18,8 +18,6 @@ class Sample(object):
         self.nvec = nvec
 
 class SubObject(object):
-    sampling = []
-
     def __init__(self, subObject, udist, vdist, tolerance):
         self.subObject = subObject
         self.udist = udist
@@ -28,8 +26,7 @@ class SubObject(object):
         self.vstep = vdist
         self.tolerance = tolerance
 
-        """THIS IS BAD CODE AND SHOULD BE FIXED SOME OTHER WAY"""
-        #self.sampling[:] = []
+        self.sampling = []
 
         self.sample_subObject()
 
@@ -75,9 +72,8 @@ class SubObject(object):
 
         self.calibrate_step()
 
-        FreeCAD.Console.PrintMessage("\nNumber of samples before isInside: %s" % (len(self.sampling)))
-
         """sample in u-v direction along sub object with given distance in u anv v direction"""
+        #counter = 1
         for su in np.arange(umin, umax+self.ustep, self.ustep):
             for sv in np.arange(vmin, vmax+self.vstep, self.vstep):
                 vec = self.subObject.valueAt(su,sv)
@@ -87,8 +83,6 @@ class SubObject(object):
                     self.sampling.append(samp)
                 else:
                     pass
-                    #FreeCAD.Console.PrintMessage("\nNot inside: (%s, %s)" % (su, sv))
-        FreeCAD.Console.PrintMessage("\nNumber of samples after isInside: %s" % (len(self.sampling)))
 
     def calculate_dist(self, (u1,v1), (u2,v2)):
         vec1 = self.subObject.valueAt(u1,v1)
@@ -98,13 +92,16 @@ class SubObject(object):
         return dist
 
     def __str__(self):
-        str = "\nLength of sampling: %s" % (len(self.sampling))
-        return str
+        str = "\nSubObject: %s" % (self.subObject)
+        str1 = "\nLength of sampling: %s" % (len(self.sampling))
+
+        return str + str1
 
 class PointCloud(object):
-    point_cloud = []
-    sub_objects = []
-    num_so = 0
+    def __init__(self):
+        self.sub_objects = []
+        self.point_cloud = []
+        self.num_so = 0
 
     def get_subObjects(self):
         ustep = 10.0
@@ -114,31 +111,33 @@ class PointCloud(object):
 
         try:
             selected = FreeCADGui.Selection.getSelectionEx()
-            FreeCADGui.Selection.clearSelection()
+            #FreeCADGui.Selection.clearSelection()
         except Exception as e:
             FreeCAD.Console.PrintError("\nNo object selected")
         else:
             self.num_so = len(selected[0].SubObjects)
-            FreeCAD.Console.PrintMessage("\nNumber of selected subObjects: %s" % (self.num_so))
+            #FreeCAD.Console.PrintMessage("\nNumber of selected subObjects: %s" % (self.num_so))
+
             #Iterate over and sample selected sub objects
             for sub_object in selected[0].SubObjects:
-                sub = None
                 sub = SubObject(sub_object, ustep, vstep, tolerance)
                 FreeCAD.Console.PrintMessage(sub)
                 self.sub_objects.append(sub)
                 FreeCAD.Console.PrintMessage(self)
 
-            #self.display_sampling()
+            self.display_sampling()
 
     def display_sampling(self):
         FreeCAD.Console.PrintMessage(self)
         if len(self.sub_objects) > 0:
+
             for sub in self.sub_objects:
-                FreeCAD.Console.PrintMessage(sub)
                 FreeCAD.Console.PrintMessage("\nNumber of samples to display: %s\n" % (len(sub.sampling)))
                 for samp in sub.sampling:
                     Draft.makePoint(samp.x, samp.y, samp.z)
-            FreeCAD.Console.PrintMessage("\nPoints generated")
+            #FreeCAD.Console.PrintMessage("\nPoints generated")
+
+
         else:
             FreeCAD.Console.PrintError("\nThere are no points to display")
 
@@ -146,20 +145,13 @@ class PointCloud(object):
         pass
 
     def __str__(self):
-        str = "\nNumber of sub objects: %s" % (len(self.sub_objects))
+        str = "\nPointCloud: Number of sub objects: %s" % (len(self.sub_objects))
         return str
-
 
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
     p.get_subObjects()
-
-    FreeCAD.Console.PrintMessage("\n\nFinal check before finish\n")
-    FreeCAD.Console.PrintMessage(p)
-    for so in p.sub_objects:
-        FreeCAD.Console.PrintMessage(so)
-
 
 if __name__ == "__main__":
     main()

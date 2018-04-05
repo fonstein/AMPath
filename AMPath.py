@@ -31,35 +31,28 @@ class SubObject(object):
         self.sample_subObject()
 
     def calibrate_step(self):
+        accuracy = 100.0
         u_calibrated = False
         v_calibrated = False
         while not (u_calibrated and v_calibrated):
-            #FreeCAD.Console.PrintMessage("\nCalibrating")
             u_rand = random.uniform(self.subObject.ParameterRange[0], self.subObject.ParameterRange[1])
             v_rand = random.uniform(self.subObject.ParameterRange[2], self.subObject.ParameterRange[3])
-            #FreeCAD.Console.PrintMessage("\nCalculated rand")
             try:
                 dist_v = self.calculate_dist((u_rand, v_rand), (u_rand, v_rand+self.vstep))
                 dist_u = self.calculate_dist((u_rand, v_rand), (u_rand+self.ustep, v_rand))
-                #FreeCAD.Console.PrintMessage("\nPoints: (%s, %s), (%s, %s) and (%s, %s)"% (u_rand, v_rand, u_rand, v_rand+self.vstep, u_rand+self.ustep, v_rand ))
-                #FreeCAD.Console.PrintMessage("\nCalculated dist. u: %s v: %s" % (dist_u, dist_v))
             except Exception as e:
                 FreeCAD.Console.PrintError("\nCould not calculate dist: %s" % (e))
 
             else:
-                if (not v_calibrated) and (dist_v > (self.vdist + self.vdist/6.0) or dist_v < (self.vdist - self.vdist/6.0)):
+                if (not v_calibrated) and (dist_v > (self.vdist + self.vdist/accuracy) or dist_v < (self.vdist - self.vdist/accuracy)):
                     prev = self.vstep
-                    #self.vstep = (self.vstep**2)/dist_v
                     self.vstep = self.vstep*self.vdist/dist_v
-                    #FreeCAD.Console.PrintMessage("\nChanged step v from %s to: %s" % (prev, self.vstep))
                 else:
                     v_calibrated = True
 
-                if (not u_calibrated) and (dist_u > (self.udist + self.udist/6.0) or dist_u < (self.udist - self.udist/6.0)):
+                if (not u_calibrated) and (dist_u > (self.udist + self.udist/accuracy) or dist_u < (self.udist - self.udist/accuracy)):
                     prev = self.ustep
-                    #self.ustep = (self.ustep**2)/dist_u
                     self.ustep = self.ustep*self.udist/dist_u
-                    #FreeCAD.Console.PrintMessage("\nChanged step u from %s to: %s" % (prev, self.ustep))
                 else:
                     u_calibrated = True
 
@@ -125,24 +118,19 @@ class PointCloud(object):
                 self.sub_objects.append(sub)
                 FreeCAD.Console.PrintMessage(self)
 
-            self.display_sampling()
-
     def display_sampling(self):
-        FreeCAD.Console.PrintMessage(self)
-        if len(self.sub_objects) > 0:
-
-            for sub in self.sub_objects:
-                FreeCAD.Console.PrintMessage("\nNumber of samples to display: %s\n" % (len(sub.sampling)))
-                for samp in sub.sampling:
-                    Draft.makePoint(samp.x, samp.y, samp.z)
+        if len(self.point_cloud) > 0:
+            FreeCAD.Console.PrintMessage("\nNumber of samples to display: %s\n" % (len(self.point_cloud)))
+            for vec in self.point_cloud:
+                Draft.makePoint(vec.x, vec.y, vec.z)
             #FreeCAD.Console.PrintMessage("\nPoints generated")
-
-
         else:
             FreeCAD.Console.PrintError("\nThere are no points to display")
 
     def generate_point_cloud(self):
-        pass
+        for sub in self.sub_objects:
+            for samp in sub.sampling:
+                self.point_cloud.append(samp.vec)
 
     def __str__(self):
         str = "\nPointCloud: Number of sub objects: %s" % (len(self.sub_objects))
@@ -152,6 +140,10 @@ def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
     p.get_subObjects()
+    p.generate_point_cloud()
+    p.display_sampling()
+
+    FreeCAD.Console.PrintMessage("\nLength of point cloud: %s" % (len(p.point_cloud)))
 
 if __name__ == "__main__":
     main()

@@ -85,10 +85,8 @@ class SubObject(object):
         return dist
 
     def __str__(self):
-        str = "\nSubObject: %s" % (self.subObject)
-        str1 = "\nLength of sampling: %s" % (len(self.sampling))
-
-        return str + str1
+        str = "\nLength of sampling: %s" % (len(self.sampling))
+        return str
 
 class PointCloud(object):
     def __init__(self):
@@ -130,20 +128,69 @@ class PointCloud(object):
     def generate_point_cloud(self):
         for sub in self.sub_objects:
             for samp in sub.sampling:
-                self.point_cloud.append(samp.vec)
+                self.point_cloud.append(samp)   #Appends Sample object
 
     def __str__(self):
         str = "\nPointCloud: Number of sub objects: %s" % (len(self.sub_objects))
         return str
+
+class Path(object):
+    def __init__(self, point_cloud):
+        self.point_cloud = point_cloud
+        self.path = []
+        #self.dist_matrix = {}
+
+    def display_path(self):
+        path_vec = []
+        for samp in self.path:
+            path_vec.append(samp.vec)
+        #FreeCAD.Console.PrintMessage(path_vec)
+        Draft.makeBSpline(path_vec, closed=False, face=False, support=None)
+
+    def calculate_dist(self, vec1, vec2):
+        dist = math.sqrt((vec2.x-vec1.x)**2 + (vec2.y-vec1.y)**2 + (vec2.z-vec1.z)**2)
+        return dist
+
+    def greedy_algorithm(self, sample): #sample is the start point
+        coord = self.point_cloud    #Copy of point cloud (list of Sample objects)
+        path = []   #Empty list for the path
+
+        current_sample = sample
+
+        coord.remove(current_sample)    #Removes the starting point from the list
+        path.append(current_sample)     #Appends the starting point to the path
+
+        n = len(coord)
+
+        for n in range(n-1) :
+            greedy_choice = coord[0]
+            current_dist = self.calculate_dist(current_sample.vec, greedy_choice.vec)
+            for sample in coord[1:]:
+                dist = self.calculate_dist(current_sample.vec, sample.vec)
+                if dist < current_dist:
+                    greedy_choice = sample
+                    current_dist = dist
+                else:
+                    pass
+
+            path.append(greedy_choice)
+            coord.remove(greedy_choice)
+            current_sample = greedy_choice  #Sets the greedy choice to the current sample
+
+        self.path = path    #Update path
 
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
     p.get_subObjects()
     p.generate_point_cloud()
-    p.display_sampling()
+    #p.display_sampling()
 
-    FreeCAD.Console.PrintMessage("\nLength of point cloud: %s" % (len(p.point_cloud)))
+    #Test for Path
+    path = Path(p.point_cloud)
+    path.greedy_algorithm(path.point_cloud[0])
+    #FreeCAD.Console.PrintMessage("Path: %s" % (path.path))
+    path.display_path()
 
 if __name__ == "__main__":
     main()

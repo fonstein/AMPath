@@ -138,20 +138,20 @@ class Path(object):
     def __init__(self, point_cloud):
         self.point_cloud = point_cloud
         self.path = []
-        #self.dist_matrix = {}
 
     def display_path(self):
         path_vec = []
         for samp in self.path:
             path_vec.append(samp.vec)
-        #FreeCAD.Console.PrintMessage(path_vec)
-        Draft.makeBSpline(path_vec, closed=False, face=False, support=None)
+
+        #Draft.makeBSpline(path_vec, closed=False, face=False, support=None)
+        Draft.makeWire(path_vec,closed=False,face=False,support=None)
 
     def calculate_dist(self, vec1, vec2):
         dist = math.sqrt((vec2.x-vec1.x)**2 + (vec2.y-vec1.y)**2 + (vec2.z-vec1.z)**2)
         return dist
 
-    def greedy_algorithm(self, sample): #sample is the start point
+    def greedy_algorithm(self, sample): #sample is the starting point
         coord = self.point_cloud    #Copy of point cloud (list of Sample objects)
         path = []   #Empty list for the path
 
@@ -162,7 +162,7 @@ class Path(object):
 
         n = len(coord)
 
-        for n in range(n-1) :
+        for n in range(n):
             greedy_choice = coord[0]
             current_dist = self.calculate_dist(current_sample.vec, greedy_choice.vec)
             for sample in coord[1:]:
@@ -189,7 +189,6 @@ def main():
     #Test for Path
     path = Path(p.point_cloud)
     path.greedy_algorithm(path.point_cloud[0])
-    #FreeCAD.Console.PrintMessage("Path: %s" % (path.path))
     path.display_path()
 
 if __name__ == "__main__":

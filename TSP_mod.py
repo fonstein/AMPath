@@ -1,7 +1,7 @@
 import math
 import random
 
-def distL2((x1,y1), (x2,y2)):
+def distL2((x1,y1,z1), (x2,y2,z2)):
     """Compute the L2-norm (Euclidean) distance between two points.
 
     The distance is rounded to the closest integer, for compatibility
@@ -9,9 +9,8 @@ def distL2((x1,y1), (x2,y2)):
 
     The two points are located on coordinates (x1,y1) and (x2,y2),
     sent as parameters"""
-    xdiff = x2 - x1
-    ydiff = y2 - y1
-    return int(math.sqrt(xdiff*xdiff + ydiff*ydiff) + .5)
+
+    return int(math.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)+ .5)
 
 def distL1((x1,y1), (x2,y2)):
     """Compute the L1-norm (Manhattan) distance between two points.
@@ -35,9 +34,9 @@ def mk_matrix(coord, dist):
     D = {}      # dictionary to hold n times n matrix
     for i in range(n-1):
         for j in range(i+1,n):
-            (x1,y1) = coord[i]
-            (x2,y2) = coord[j]
-            D[i,j] = dist((x1,y1), (x2,y2))
+            (x1,y1,z1) = coord[i]
+            (x2,y2,z2) = coord[j]
+            D[i,j] = dist((x1,y1,z1), (x2,y2,z2))
             D[j,i] = D[i,j]
     return n,D
 
@@ -253,60 +252,39 @@ def multistart_localsearch(k, n, D, report=None):
 
     return bestt, bestz
 
-
-if __name__ == "__main__":
-    """Local search for the Travelling Saleman Problem: sample usage."""
-
-    #
-    # test the functions:
-    #
-
-    # random.seed(1)    # uncomment for having always the same behavior
+def run_TSP(coord):
     import sys
-    if len(sys.argv) == 1:
-        # create a graph with several cities' coordinates
-        coord = [(4,0),(5,6),(8,3),(4,4),(4,1),(4,10),(4,7),(6,8),(8,1)]
-        n, D = mk_matrix(coord, distL2) # create the distance matrix
-        instance = "toy problem"
-    else:
-        instance = sys.argv[1]
-        n, coord, D = read_tsplib(instance)     # create the distance matrix
-        # n, coord, D = read_tsplib('INSTANCES/TSP/eil51.tsp')  # create the distance matrix
 
-    # function for printing best found solution when it is found
-    from time import clock
-    init = clock()
-    def report_sol(obj, s=""):
-        print "cpu:%g\tobj:%g\ttour:%s" % \
-              (clock(), obj, s)
+    n, D = mk_matrix(coord, distL2) # create the distance matrix
+    instance = "toy problem"
 
+    print "\n*** travelling salesman problem ***"
 
-    print "*** travelling salesman problem ***"
-    print
-
-    # random construction
-    print "random construction + local search:"
-    tour = randtour(n)     # create a random tour
-    z = length(tour, D)     # calculate its length
-    print "random:", tour, z, '  -->  ',
-    z = localsearch(tour, z, D)      # local search starting from the random tour
-    print tour, z
-    print
+    # # random construction
+    # print "random construction + local search:"
+    # tour = randtour(n)     # create a random tour
+    # z = length(tour, D)     # calculate its length
+    # print "random:", tour, z, '  -->  ',
+    # z = localsearch(tour, z, D)      # local search starting from the random tour
+    # print tour, z
+    # print
+    # return tour
 
     # greedy construction
-    print "greedy construction with nearest neighbor + local search:"
+    print "greedy construction with nearest neighbor + local search"
     for i in range(n):
         tour = nearest_neighbor(n, i, D)     # create a greedy tour, visiting city 'i' first
         z = length(tour, D)
-        print "nneigh:", tour, z, '  -->  ',
+        #print "nneigh:", tour, z, '  -->  ',
         z = localsearch(tour, z, D)
-        print tour, z
-    print
+        #print tour, z
+    #print tour, z
+    return tour
 
-    # multi-start local search
-    print "random start local search:"
-    niter = 100
-    tour,z = multistart_localsearch(niter, n, D, report_sol)
-    assert z == length(tour, D)
-    print "best found solution (%d iterations): z = %g" % (niter, z)
-    print tour
+    # # multi-start local search
+    # print "random start local search:"
+    # niter = 100
+    # tour,z = multistart_localsearch(niter, n, D, report_sol)
+    # assert z == length(tour, D)
+    # print "best found solution (%d iterations): z = %g" % (niter, z)
+    # print tour

@@ -5,6 +5,7 @@ import Draft
 import math
 import numpy as np
 import random
+import TSP_mod
 
 class Sample(object):
     def __init__(self, subObject, u, v, vec, nvec):
@@ -179,6 +180,20 @@ class Path(object):
 
         self.path = path    #Update path
 
+    def TSP(self):
+        coord = []
+        for point in self.point_cloud:
+            coordinate = (point.x, point.y, point.z)
+            coord.append(coordinate)
+
+        tsp_path = TSP_mod.run_TSP(coord)
+        path = []
+        for point in tsp_path:
+            sample = self.point_cloud[point]
+            path.append(sample)
+
+        self.path = path
+
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
@@ -188,8 +203,12 @@ def main():
 
     #Test for Path
     path = Path(p.point_cloud)
-    path.greedy_algorithm(path.point_cloud[0])
+    #path.greedy_algorithm(path.point_cloud[0])
+    #path.display_path()
+
+    path.TSP()
     path.display_path()
+
 
 if __name__ == "__main__":
     main()

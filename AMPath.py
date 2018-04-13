@@ -8,15 +8,13 @@ import random
 import TSP_mod
 
 class Sample(object):
-    def __init__(self, subObject, u, v, vec, nvec):
+    def __init__(self, subObject, u, v):
         self.subObject = subObject
         self.u = u
         self.v = v
-        self.vec = vec
-        self.x = vec.x
-        self.y = vec.y
-        self.z = vec.z
-        self.nvec = nvec
+
+        self.vec = self.subObject.valueAt(u, v)
+        self.nvec = self.subObject.normalAt(u, v)
 
 class SubObject(object):
     def __init__(self, subObject, udist, vdist, tolerance):
@@ -29,10 +27,11 @@ class SubObject(object):
 
         self.sampling = []
 
-        self.sample_subObject()
+        self.sample_subObject2()
+        #self.sample_subObject_adaptiv()
 
     def calibrate_step(self):
-        accuracy = 100.0
+        accuracy = 6
         u_calibrated = False
         v_calibrated = False
         while not (u_calibrated and v_calibrated):
@@ -57,6 +56,25 @@ class SubObject(object):
                 else:
                     u_calibrated = True
 
+    def calibrate_step2(self, u_c, v_c, ustep, vstep, dist_d):
+        accuracy = 10
+        calibrated = False
+        while not calibrated:
+            #u_rand = random.uniform(self.subObject.ParameterRange[0], self.subObject.ParameterRange[1])
+            #v_rand = random.uniform(self.subObject.ParameterRange[2], self.subObject.ParameterRange[3])
+            try:
+                dist = self.calculate_dist((u_c, v_c), (u_c + ustep, v_c + vstep))
+            except Exception as e:
+                FreeCAD.Console.PrintError("\nCould not calculate dist: %s" % (e))
+            else:
+                if (not calibrated) and (dist > (dist_d + dist_d/accuracy) or dist < (dist_d - dist_d/accuracy)):
+                    #prev = self.vstep
+                    vstep = vstep*dist_d/dist
+                    ustep = ustep*dist_d/dist
+                else:
+                    calibrated = True
+        return ustep, vstep
+
     def sample_subObject(self):
         pRange = self.subObject.ParameterRange
         umin = pRange[0]
@@ -65,18 +83,45 @@ class SubObject(object):
         vmax = pRange[3]
 
         self.calibrate_step()
+        #[self.ustep, dummy] = self.calibrate_step2(umin, vmin, self.ustep, 0.0, self.udist)
+        #[dummy, self.vstep] = self.calibrate_step2(umin, vmin, 0.0, self.vstep, self.vdist)
 
         """sample in u-v direction along sub object with given distance in u anv v direction"""
-        #counter = 1
         for su in np.arange(umin, umax+self.ustep, self.ustep):
             for sv in np.arange(vmin, vmax+self.vstep, self.vstep):
                 vec = self.subObject.valueAt(su,sv)
                 if self.subObject.isInside(vec,self.tolerance,True):
-                    nvec = self.subObject.normalAt(su, sv)
-                    samp = Sample(self, su, sv, vec, nvec)
+                    #nvec = self.subObject.normalAt(su, sv)
+                    samp = Sample(self.subObject, su, sv)
                     self.sampling.append(samp)
                 else:
                     pass
+
+    def sample_subObject2(self):
+        pRange = self.subObject.ParameterRange
+        umin = pRange[0]
+        umax = pRange[1]
+        vmin = pRange[2]
+        vmax = pRange[3]
+
+        u = umin
+        v = vmin
+        self.sampling.append(Sample(self.subObject, u, v))  #Add initial point
+
+        while u < umax:
+            while v < vmax:
+                [dummy, self.vstep] = self.calibrate_step2(u, v, 0.0, self.vstep, self.vdist)
+                v = v + self.vstep
+                vec = self.subObject.valueAt(u, v)
+                if self.subObject.isInside(vec, self.tolerance, True):
+                    self.sampling.append(Sample(self.subObject, u, v))
+
+            v = vmin
+            [self.ustep, dummy] = self.calibrate_step2(u, v, self.ustep, 0.0, self.udist)
+            u = u + self.ustep
+            vec = self.subObject.valueAt(u, v)
+            if self.subObject.isInside(vec, self.tolerance, True):
+                self.sampling.append(Sample(self.subObject, u, v))
 
     def calculate_dist(self, (u1,v1), (u2,v2)):
         vec1 = self.subObject.valueAt(u1,v1)
@@ -115,13 +160,13 @@ class PointCloud(object):
                 sub = SubObject(sub_object, ustep, vstep, tolerance)
                 FreeCAD.Console.PrintMessage(sub)
                 self.sub_objects.append(sub)
-                FreeCAD.Console.PrintMessage(self)
+            FreeCAD.Console.PrintMessage(self)
 
     def display_sampling(self):
         if len(self.point_cloud) > 0:
             FreeCAD.Console.PrintMessage("\nNumber of samples to display: %s\n" % (len(self.point_cloud)))
-            for vec in self.point_cloud:
-                Draft.makePoint(vec.x, vec.y, vec.z)
+            for point in self.point_cloud:
+                Draft.makePoint(point.vec.x, point.vec.y, point.vec.z)
             #FreeCAD.Console.PrintMessage("\nPoints generated")
         else:
             FreeCAD.Console.PrintError("\nThere are no points to display")
@@ -180,6 +225,41 @@ class Path(object):
 
         self.path = path    #Update path
 
+    def greedy_weighted(self, sample):
+        coord = self.point_cloud    #Copy of point cloud (list of Sample objects)
+        path = []   #Empty list for the path
+
+        current_sample = sample
+
+        coord.remove(current_sample)    #Removes the starting point from the list
+        path.append(current_sample)     #Appends the starting point to the path
+
+        n = len(coord)
+
+        for n in range(n):
+            current_dist = float("inf")
+            for sample in coord:
+                weight = 10.0
+                vec1 = current_sample.vec
+                vec2 = sample.vec
+                dist = math.sqrt(((vec2.x)-vec1.x)**2 + ((vec2.y+weight)-vec1.y)**2 + (vec2.z-vec1.z)**2)
+                # if sample.u != current_sample.u:
+                #     dist = self.calculate_dist(current_sample.vec, sample.vec) + 10.0
+                # else:
+                #     dist = self.calculate_dist(current_sample.vec, sample.vec)
+
+                if dist < current_dist:
+                    greedy_choice = sample
+                    current_dist = dist
+                else:
+                    pass
+
+            path.append(greedy_choice)
+            coord.remove(greedy_choice)
+            current_sample = greedy_choice  #Sets the greedy choice to the current sample
+
+        self.path = path    #Update path
+
     def TSP(self):
         coord = []
         for point in self.point_cloud:
@@ -203,11 +283,18 @@ def main():
 
     #Test for Path
     path = Path(p.point_cloud)
-    #path.greedy_algorithm(path.point_cloud[0])
-    #path.display_path()
 
-    path.TSP()
+    #GREEDY
+    # path.greedy_algorithm(path.point_cloud[0])
+    # path.display_path()
+
+    #GREEDY WEIGHTED
+    path.greedy_weighted(path.point_cloud[0])
     path.display_path()
+
+    # #TSP
+    # path.TSP()
+    # path.display_path()
 
 
 if __name__ == "__main__":

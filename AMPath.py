@@ -140,9 +140,9 @@ class PointCloud(object):
         self.point_cloud = []
         self.num_so = 0
 
-    def get_subObjects(self):
-        ustep = 10.0
-        vstep = 10.0
+    def get_subObjects(self, ustep, vstep):
+        #ustep = 10.0
+        #vstep = 10.0
         tolerance = 10.0
         display = False
 
@@ -224,6 +224,7 @@ class Path(object):
             current_sample = greedy_choice  #Sets the greedy choice to the current sample
 
         self.path = path    #Update path
+        FreeCAD.Console.PrintMessage("\nGenerated greedy path.")
 
     def greedy_weighted(self, sample):
         coord = self.point_cloud    #Copy of point cloud (list of Sample objects)
@@ -238,15 +239,35 @@ class Path(object):
 
         for n in range(n):
             current_dist = float("inf")
+
+            #Different types of weighting
+            y_weighted = False
+            u_weighted = False
+            normal_weighted = False
+            xz_reward = True
+
             for sample in coord:
                 weight = 10.0
                 vec1 = current_sample.vec
                 vec2 = sample.vec
-                dist = math.sqrt(((vec2.x)-vec1.x)**2 + ((vec2.y+weight)-vec1.y)**2 + (vec2.z-vec1.z)**2)
-                # if sample.u != current_sample.u:
-                #     dist = self.calculate_dist(current_sample.vec, sample.vec) + 10.0
-                # else:
-                #     dist = self.calculate_dist(current_sample.vec, sample.vec)
+
+                if y_weighted:
+                    dist = math.sqrt(((vec2.x)-vec1.x)**2 + ((vec2.y+weight)-vec1.y)**2 + (vec2.z-vec1.z)**2)
+
+                if u_weighted:
+                    if sample.u != current_sample.u:
+                        dist = self.calculate_dist(current_sample.vec, sample.vec) + weight
+                    else:
+                        dist = self.calculate_dist(current_sample.vec, sample.vec)
+
+                if normal_weighted:
+                    norm1 = current_sample.nvec
+                    norm2 = sample.nvec
+                    norm_dist = math.sqrt(((norm2.x)-norm1.x)**2 + ((norm2.y)-norm1.y)**2 + (norm2.z-norm1.z)**2)
+                    dist = math.sqrt(((vec2.x)-vec1.x)**2 + ((vec2.y)-vec1.y)**2 + (vec2.z-vec1.z)**2) + norm_dist*10
+
+                if xz_reward:
+                    dist = math.sqrt((((vec2.x)-vec1.x)/2.0)**2 + (vec2.y-vec1.y)**2 + ((vec2.z-vec1.z)/2.0)**2)
 
                 if dist < current_dist:
                     greedy_choice = sample
@@ -259,6 +280,7 @@ class Path(object):
             current_sample = greedy_choice  #Sets the greedy choice to the current sample
 
         self.path = path    #Update path
+        FreeCAD.Console.PrintMessage("\nGenerated weighted greedy path.")
 
     def TSP(self):
         coord = []
@@ -273,11 +295,12 @@ class Path(object):
             path.append(sample)
 
         self.path = path
+        FreeCAD.Console.PrintMessage("\nGenerated TSP path.")
 
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
-    p.get_subObjects()
+    p.get_subObjects(10.0, 10.0)
     p.generate_point_cloud()
     #p.display_sampling()
 
@@ -295,7 +318,6 @@ def main():
     # #TSP
     # path.TSP()
     # path.display_path()
-
 
 if __name__ == "__main__":
     main()

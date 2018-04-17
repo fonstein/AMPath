@@ -60,15 +60,12 @@ class SubObject(object):
         accuracy = 10
         calibrated = False
         while not calibrated:
-            #u_rand = random.uniform(self.subObject.ParameterRange[0], self.subObject.ParameterRange[1])
-            #v_rand = random.uniform(self.subObject.ParameterRange[2], self.subObject.ParameterRange[3])
             try:
                 dist = self.calculate_dist((u_c, v_c), (u_c + ustep, v_c + vstep))
             except Exception as e:
                 FreeCAD.Console.PrintError("\nCould not calculate dist: %s" % (e))
             else:
                 if (not calibrated) and (dist > (dist_d + dist_d/accuracy) or dist < (dist_d - dist_d/accuracy)):
-                    #prev = self.vstep
                     vstep = vstep*dist_d/dist
                     ustep = ustep*dist_d/dist
                 else:
@@ -141,8 +138,6 @@ class PointCloud(object):
         self.num_so = 0
 
     def get_subObjects(self, ustep, vstep):
-        #ustep = 10.0
-        #vstep = 10.0
         tolerance = 10.0
         display = False
 
@@ -153,7 +148,6 @@ class PointCloud(object):
             FreeCAD.Console.PrintError("\nNo object selected")
         else:
             self.num_so = len(selected[0].SubObjects)
-            #FreeCAD.Console.PrintMessage("\nNumber of selected subObjects: %s" % (self.num_so))
 
             #Iterate over and sample selected sub objects
             for sub_object in selected[0].SubObjects:
@@ -167,7 +161,6 @@ class PointCloud(object):
             FreeCAD.Console.PrintMessage("\nNumber of samples to display: %s\n" % (len(self.point_cloud)))
             for point in self.point_cloud:
                 Draft.makePoint(point.vec.x, point.vec.y, point.vec.z)
-            #FreeCAD.Console.PrintMessage("\nPoints generated")
         else:
             FreeCAD.Console.PrintError("\nThere are no points to display")
 
@@ -198,8 +191,8 @@ class Path(object):
         return dist
 
     def greedy_algorithm(self, sample): #sample is the starting point
-        coord = self.point_cloud    #Copy of point cloud (list of Sample objects)
-        path = []   #Empty list for the path
+        coord = self.point_cloud        #Copy of point cloud (list of Sample objects)
+        path = []                       #Empty list for the path
 
         current_sample = sample
 
@@ -223,12 +216,12 @@ class Path(object):
             coord.remove(greedy_choice)
             current_sample = greedy_choice  #Sets the greedy choice to the current sample
 
-        self.path = path    #Update path
+        self.path = path                #Update path
         FreeCAD.Console.PrintMessage("\nGenerated greedy path.")
 
     def greedy_weighted(self, sample):
-        coord = self.point_cloud    #Copy of point cloud (list of Sample objects)
-        path = []   #Empty list for the path
+        coord = self.point_cloud        #Copy of point cloud (list of Sample objects)
+        path = []                       #Empty list for the path
 
         current_sample = sample
 
@@ -240,7 +233,7 @@ class Path(object):
         for n in range(n):
             current_dist = float("inf")
 
-            #Different types of weighting
+            #Different types of weighting. Set the desired method to True and the rest to False
             y_weighted = False
             u_weighted = False
             normal_weighted = False

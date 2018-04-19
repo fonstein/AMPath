@@ -27,9 +27,10 @@ class SubObject(object):
 
         self.sampling = []
 
-        self.sample_subObject2()
+        self.sample_subObject()
         #self.sample_subObject_adaptiv()
 
+    """
     def calibrate_step(self):
         accuracy = 6
         u_calibrated = False
@@ -55,8 +56,9 @@ class SubObject(object):
                     self.ustep = self.ustep*self.udist/dist_u
                 else:
                     u_calibrated = True
+    """
 
-    def calibrate_step2(self, u_c, v_c, ustep, vstep, dist_d):
+    def calibrate_step(self, u_c, v_c, ustep, vstep, dist_d):
         accuracy = 10
         calibrated = False
         while not calibrated:
@@ -72,6 +74,7 @@ class SubObject(object):
                     calibrated = True
         return ustep, vstep
 
+    """
     def sample_subObject(self):
         pRange = self.subObject.ParameterRange
         umin = pRange[0]
@@ -80,10 +83,10 @@ class SubObject(object):
         vmax = pRange[3]
 
         self.calibrate_step()
-        #[self.ustep, dummy] = self.calibrate_step2(umin, vmin, self.ustep, 0.0, self.udist)
-        #[dummy, self.vstep] = self.calibrate_step2(umin, vmin, 0.0, self.vstep, self.vdist)
+        #[self.ustep, dummy] = self.calibrate_step(umin, vmin, self.ustep, 0.0, self.udist)
+        #[dummy, self.vstep] = self.calibrate_step(umin, vmin, 0.0, self.vstep, self.vdist)
 
-        """sample in u-v direction along sub object with given distance in u anv v direction"""
+        #sample in u-v direction along sub object with given distance in u anv v direction
         for su in np.arange(umin, umax+self.ustep, self.ustep):
             for sv in np.arange(vmin, vmax+self.vstep, self.vstep):
                 vec = self.subObject.valueAt(su,sv)
@@ -93,8 +96,9 @@ class SubObject(object):
                     self.sampling.append(samp)
                 else:
                     pass
+    """
 
-    def sample_subObject2(self):
+    def sample_subObject(self):
         pRange = self.subObject.ParameterRange
         umin = pRange[0]
         umax = pRange[1]
@@ -107,14 +111,14 @@ class SubObject(object):
 
         while u < umax:
             while v < vmax:
-                [dummy, self.vstep] = self.calibrate_step2(u, v, 0.0, self.vstep, self.vdist)
+                [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
                 v = v + self.vstep
                 vec = self.subObject.valueAt(u, v)
                 if self.subObject.isInside(vec, self.tolerance, True):
                     self.sampling.append(Sample(self.subObject, u, v))
 
             v = vmin
-            [self.ustep, dummy] = self.calibrate_step2(u, v, self.ustep, 0.0, self.udist)
+            [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
             u = u + self.ustep
             vec = self.subObject.valueAt(u, v)
             if self.subObject.isInside(vec, self.tolerance, True):
@@ -235,9 +239,9 @@ class Path(object):
 
             #Different types of weighting. Set the desired method to True and the rest to False
             y_weighted = False
-            u_weighted = False
+            u_weighted = True
             normal_weighted = False
-            xz_reward = True
+            xz_reward = False
 
             for sample in coord:
                 weight = 10.0
@@ -275,10 +279,10 @@ class Path(object):
         self.path = path    #Update path
         FreeCAD.Console.PrintMessage("\nGenerated weighted greedy path.")
 
-    def TSP(self):
+    def TSP_path(self):
         coord = []
         for point in self.point_cloud:
-            coordinate = (point.x, point.y, point.z)
+            coordinate = (point.vec.x, point.vec.y, point.vec.z)
             coord.append(coordinate)
 
         tsp_path = TSP_mod.run_TSP(coord)
@@ -309,7 +313,7 @@ def main():
     path.display_path()
 
     # #TSP
-    # path.TSP()
+    # path.TSP_path()
     # path.display_path()
 
 if __name__ == "__main__":

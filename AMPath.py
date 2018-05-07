@@ -6,6 +6,7 @@ import math
 import numpy as np
 import random
 import TSP_mod
+import TSP_mod2
 
 class Sample(object):
     def __init__(self, subObject, u, v):
@@ -30,34 +31,6 @@ class SubObject(object):
         self.sample_subObject()
         #self.sample_subObject_adaptiv()
 
-    """
-    def calibrate_step(self):
-        accuracy = 6
-        u_calibrated = False
-        v_calibrated = False
-        while not (u_calibrated and v_calibrated):
-            u_rand = random.uniform(self.subObject.ParameterRange[0], self.subObject.ParameterRange[1])
-            v_rand = random.uniform(self.subObject.ParameterRange[2], self.subObject.ParameterRange[3])
-            try:
-                dist_v = self.calculate_dist((u_rand, v_rand), (u_rand, v_rand+self.vstep))
-                dist_u = self.calculate_dist((u_rand, v_rand), (u_rand+self.ustep, v_rand))
-            except Exception as e:
-                FreeCAD.Console.PrintError("\nCould not calculate dist: %s" % (e))
-
-            else:
-                if (not v_calibrated) and (dist_v > (self.vdist + self.vdist/accuracy) or dist_v < (self.vdist - self.vdist/accuracy)):
-                    prev = self.vstep
-                    self.vstep = self.vstep*self.vdist/dist_v
-                else:
-                    v_calibrated = True
-
-                if (not u_calibrated) and (dist_u > (self.udist + self.udist/accuracy) or dist_u < (self.udist - self.udist/accuracy)):
-                    prev = self.ustep
-                    self.ustep = self.ustep*self.udist/dist_u
-                else:
-                    u_calibrated = True
-    """
-
     def calibrate_step(self, u_c, v_c, ustep, vstep, dist_d):
         accuracy = 10
         calibrated = False
@@ -74,30 +47,6 @@ class SubObject(object):
                     calibrated = True
         return ustep, vstep
 
-    """
-    def sample_subObject(self):
-        pRange = self.subObject.ParameterRange
-        umin = pRange[0]
-        umax = pRange[1]
-        vmin = pRange[2]
-        vmax = pRange[3]
-
-        self.calibrate_step()
-        #[self.ustep, dummy] = self.calibrate_step(umin, vmin, self.ustep, 0.0, self.udist)
-        #[dummy, self.vstep] = self.calibrate_step(umin, vmin, 0.0, self.vstep, self.vdist)
-
-        #sample in u-v direction along sub object with given distance in u anv v direction
-        for su in np.arange(umin, umax+self.ustep, self.ustep):
-            for sv in np.arange(vmin, vmax+self.vstep, self.vstep):
-                vec = self.subObject.valueAt(su,sv)
-                if self.subObject.isInside(vec,self.tolerance,True):
-                    #nvec = self.subObject.normalAt(su, sv)
-                    samp = Sample(self.subObject, su, sv)
-                    self.sampling.append(samp)
-                else:
-                    pass
-    """
-
     def sample_subObject(self):
         pRange = self.subObject.ParameterRange
         umin = pRange[0]
@@ -109,16 +58,20 @@ class SubObject(object):
         v = vmin
         self.sampling.append(Sample(self.subObject, u, v))  #Add initial point
 
+        # Uncomment for non-adaptiv sampling
+        # [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
+        # [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
+
         while u < umax:
             while v < vmax:
-                [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
+                [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist) # Comment out for non-adaptiv sampling
                 v = v + self.vstep
                 vec = self.subObject.valueAt(u, v)
                 if self.subObject.isInside(vec, self.tolerance, True):
                     self.sampling.append(Sample(self.subObject, u, v))
 
             v = vmin
-            [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
+            [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist) # Comment out for non-adaptiv sampling
             u = u + self.ustep
             vec = self.subObject.valueAt(u, v)
             if self.subObject.isInside(vec, self.tolerance, True):
@@ -189,6 +142,9 @@ class Path(object):
 
         #Draft.makeBSpline(path_vec, closed=False, face=False, support=None)
         Draft.makeWire(path_vec,closed=False,face=False,support=None)
+
+        #For Hamiltonian testing. Displays starting point
+        #Draft.makePoint(path_vec[0].x, path_vec[0].y, path_vec[0].z)
 
     def calculate_dist(self, vec1, vec2):
         dist = math.sqrt((vec2.x-vec1.x)**2 + (vec2.y-vec1.y)**2 + (vec2.z-vec1.z)**2)
@@ -294,12 +250,30 @@ class Path(object):
         self.path = path
         FreeCAD.Console.PrintMessage("\nGenerated TSP path.")
 
+    def hamiltonian_path(self):
+        coord = [(0.0, 0.0, 0.0)]
+        for point in self.point_cloud:
+            coordinate = (point.vec.x, point.vec.y, point.vec.z)
+            coord.append(coordinate)
+
+        tsp_path = TSP_mod2.run_TSP(coord)
+
+        tsp_path.pop(0)
+
+        path = []
+        for point in tsp_path:
+            sample = self.point_cloud[point-1]
+            path.append(sample)
+
+        self.path = path
+        FreeCAD.Console.PrintMessage("\nGenerated TSP path.")
+
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
     p.get_subObjects(10.0, 10.0)
     p.generate_point_cloud()
-    #p.display_sampling()
+    p.display_sampling()
 
     #Test for Path
     path = Path(p.point_cloud)
@@ -309,11 +283,15 @@ def main():
     # path.display_path()
 
     #GREEDY WEIGHTED
-    path.greedy_weighted(path.point_cloud[0])
-    path.display_path()
+    # path.greedy_weighted(path.point_cloud[0])
+    # path.display_path()
 
     # #TSP
     # path.TSP_path()
+    # path.display_path()
+
+    #Hamiltonian
+    # path.hamiltonian_path()
     # path.display_path()
 
 if __name__ == "__main__":

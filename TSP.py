@@ -1,5 +1,12 @@
+"""TSP solver from http://www.dcc.fc.up.pt/~jpp/code/py_metaheur/tsp.py """
+
 import math
 import random
+
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.lines as mlines
+
 
 def distL2((x1,y1), (x2,y2)):
     """Compute the L2-norm (Euclidean) distance between two points.
@@ -265,7 +272,12 @@ if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:
         # create a graph with several cities' coordinates
+        """ Test sets. Uncomment the one to test """
         coord = [(4,0),(5,6),(8,3),(4,4),(4,1),(4,10),(4,7),(6,8),(8,1)]
+        # coord = [(7,4),(2,6),(5,0),(7,7),(9,1),(4,10),(2,5),(7,4),(10,3)]
+        # coord = [(5,9),(2,1),(5,9),(8,8),(2,6),(2,10),(5,8),(2,3),(4,10)]
+        # coord = [(1,1),(7,6),(4,3),(2,10),(8,9),(6,7),(5,5),(4,3),(6,5)]
+
         n, D = mk_matrix(coord, distL2) # create the distance matrix
         instance = "toy problem"
     else:
@@ -303,6 +315,8 @@ if __name__ == "__main__":
         print tour, z
     print
 
+    tour_greedy = tour
+
     # multi-start local search
     print "random start local search:"
     niter = 100
@@ -310,3 +324,23 @@ if __name__ == "__main__":
     assert z == length(tour, D)
     print "best found solution (%d iterations): z = %g" % (niter, z)
     print tour
+
+
+    """ Printing out coordinates and path of TSP based on greedy initial tour """
+    plt.figure(1)
+    plt.axis('equal')
+    x = []
+    y = []
+    for coorinate in coord:
+        x.append(coorinate[0])
+        y.append(coorinate[1])
+    plt.scatter(x, y)
+    xp = x[tour_greedy[0]]
+    yp = y[tour_greedy[0]]
+    for step in tour_greedy[1:]:
+        plt.plot([xp, x[step]], [yp, y[step]], "r-")
+        xp = x[step]
+        yp = y[step]
+
+    plt.plot([x[tour_greedy[-1]], x[tour_greedy[0]]], [y[tour_greedy[-1]], y[tour_greedy[0]]], "r-")
+    plt.show()

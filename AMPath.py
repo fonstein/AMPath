@@ -6,7 +6,6 @@ import math
 import numpy as np
 import random
 import TSP_mod
-import TSP_mod2
 
 class Sample(object):
     def __init__(self, subObject, u, v):
@@ -29,7 +28,6 @@ class SubObject(object):
         self.sampling = []
 
         self.sample_subObject()
-        #self.sample_subObject_adaptiv()
 
     def calibrate_step(self, u_c, v_c, ustep, vstep, dist_d):
         accuracy = 10
@@ -59,19 +57,19 @@ class SubObject(object):
         self.sampling.append(Sample(self.subObject, u, v))  #Add initial point
 
         # Uncomment for non-adaptiv sampling
-        # [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
-        # [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
+        [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
+        [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
 
         while u < umax:
             while v < vmax:
-                [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist) # Comment out for non-adaptiv sampling
+                [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist) # Comment for non-adaptiv sampling
                 v = v + self.vstep
                 vec = self.subObject.valueAt(u, v)
                 if self.subObject.isInside(vec, self.tolerance, True):
                     self.sampling.append(Sample(self.subObject, u, v))
 
             v = vmin
-            [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist) # Comment out for non-adaptiv sampling
+            [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist) # Comment for non-adaptiv sampling
             u = u + self.ustep
             vec = self.subObject.valueAt(u, v)
             if self.subObject.isInside(vec, self.tolerance, True):
@@ -100,7 +98,6 @@ class PointCloud(object):
 
         try:
             selected = FreeCADGui.Selection.getSelectionEx()
-            #FreeCADGui.Selection.clearSelection()
         except Exception as e:
             FreeCAD.Console.PrintError("\nNo object selected")
         else:
@@ -143,9 +140,6 @@ class Path(object):
         #Draft.makeBSpline(path_vec, closed=False, face=False, support=None)
         Draft.makeWire(path_vec,closed=False,face=False,support=None)
 
-        #For Hamiltonian testing. Displays starting point
-        #Draft.makePoint(path_vec[0].x, path_vec[0].y, path_vec[0].z)
-
     def calculate_dist(self, vec1, vec2):
         dist = math.sqrt((vec2.x-vec1.x)**2 + (vec2.y-vec1.y)**2 + (vec2.z-vec1.z)**2)
         return dist
@@ -179,7 +173,7 @@ class Path(object):
         self.path = path                #Update path
         FreeCAD.Console.PrintMessage("\nGenerated greedy path.")
 
-    def greedy_weighted(self, sample):
+    def greedy_weighted(self, sample, weighting): #weighting must be "u" or "y"
         coord = self.point_cloud        #Copy of point cloud (list of Sample objects)
         path = []                       #Empty list for the path
 
@@ -193,11 +187,17 @@ class Path(object):
         for n in range(n):
             current_dist = float("inf")
 
-            #Different types of weighting. Set the desired method to True and the rest to False
-            y_weighted = False
-            u_weighted = True
-            normal_weighted = False
-            xz_reward = False
+            #Different types of weighting
+            if weighting == "u":
+                u_weighted = True
+                y_weighted = False
+            elif weighting == "y":
+                u_weighted = False
+                y_weighted = True
+            else: #u-weighting is default
+                u_weighted = True
+                y_weighted = False
+
 
             for sample in coord:
                 weight = 10.0
@@ -213,14 +213,6 @@ class Path(object):
                     else:
                         dist = self.calculate_dist(current_sample.vec, sample.vec)
 
-                if normal_weighted:
-                    norm1 = current_sample.nvec
-                    norm2 = sample.nvec
-                    norm_dist = math.sqrt(((norm2.x)-norm1.x)**2 + ((norm2.y)-norm1.y)**2 + (norm2.z-norm1.z)**2)
-                    dist = math.sqrt(((vec2.x)-vec1.x)**2 + ((vec2.y)-vec1.y)**2 + (vec2.z-vec1.z)**2) + norm_dist*10
-
-                if xz_reward:
-                    dist = math.sqrt((((vec2.x)-vec1.x)/2.0)**2 + (vec2.y-vec1.y)**2 + ((vec2.z-vec1.z)/2.0)**2)
 
                 if dist < current_dist:
                     greedy_choice = sample
@@ -250,49 +242,31 @@ class Path(object):
         self.path = path
         FreeCAD.Console.PrintMessage("\nGenerated TSP path.")
 
-    def hamiltonian_path(self):
-        coord = [(0.0, 0.0, 0.0)]
-        for point in self.point_cloud:
-            coordinate = (point.vec.x, point.vec.y, point.vec.z)
-            coord.append(coordinate)
-
-        tsp_path = TSP_mod2.run_TSP(coord)
-
-        tsp_path.pop(0)
-
-        path = []
-        for point in tsp_path:
-            sample = self.point_cloud[point-1]
-            path.append(sample)
-
-        self.path = path
-        FreeCAD.Console.PrintMessage("\nGenerated TSP path.")
 
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
     p.get_subObjects(10.0, 10.0)
     p.generate_point_cloud()
-    p.display_sampling()
 
-    #Test for Path
+    """Uncomment to display sampling"""
+    # p.display_sampling()
+
+    """Test for Path. Uncomment the deired path"""
     path = Path(p.point_cloud)
 
-    #GREEDY
+    """GREEDY"""
     # path.greedy_algorithm(path.point_cloud[0])
-    # path.display_path()
 
-    #GREEDY WEIGHTED
-    # path.greedy_weighted(path.point_cloud[0])
-    # path.display_path()
+    """GREEDY WEIGHTED. Uncomment desired weighting. U-weighting is default."""
+    path.greedy_weighted(path.point_cloud[0], "u")
+    # path.greedy_weighted(path.point_cloud[0], "y")
 
-    # #TSP
+    """TSP"""
     # path.TSP_path()
-    # path.display_path()
 
-    #Hamiltonian
-    # path.hamiltonian_path()
-    # path.display_path()
+    """Display path"""
+    path.display_path()
 
 if __name__ == "__main__":
     main()

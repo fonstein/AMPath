@@ -260,31 +260,10 @@ def run_TSP(coord):
 
     print "\n*** travelling salesman problem ***"
 
-    # # random construction
-    # print "random construction + local search:"
-    # tour = randtour(n)     # create a random tour
-    # z = length(tour, D)     # calculate its length
-    # print "random:", tour, z, '  -->  ',
-    # z = localsearch(tour, z, D)      # local search starting from the random tour
-    # print tour, z
-    # print
-    # return tour
-
     # greedy construction
     print "greedy construction with nearest neighbor + local search"
     for i in range(n):
         tour = nearest_neighbor(n, i, D)     # create a greedy tour, visiting city 'i' first
         z = length(tour, D)
-        #print "nneigh:", tour, z, '  -->  ',
         z = localsearch(tour, z, D)
-        #print tour, z
-    #print tour, z
     return tour
-
-    # # multi-start local search
-    # print "random start local search:"
-    # niter = 100
-    # tour,z = multistart_localsearch(niter, n, D, report_sol)
-    # assert z == length(tour, D)
-    # print "best found solution (%d iterations): z = %g" % (niter, z)
-    # print tour

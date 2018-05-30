@@ -7,6 +7,11 @@ import numpy as np
 import random
 import TSP_mod
 
+__title__ = "AMPath"
+__author__ = "Ingrid Fjordheim Onstein"
+__version__ = "0.1"
+__doc__ = """Tool for generating paths for AM based on faces in STEP CAD models"""
+
 class Sample(object):
     def __init__(self, subObject, u, v):
         self.subObject = subObject
@@ -248,7 +253,7 @@ def main():
     p.generate_point_cloud()
 
     """Uncomment to display sampling"""
-    p.display_sampling()
+    # p.display_sampling()
 
     """Test for Path. Uncomment the deired path"""
     path = Path(p.point_cloud)

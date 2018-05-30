@@ -1,3 +1,5 @@
+"""Modified TSP solver"""
+
 import math
 import random
 
@@ -10,7 +12,7 @@ def distL2((x1,y1,z1), (x2,y2,z2)):
     The two points are located on coordinates (x1,y1) and (x2,y2),
     sent as parameters"""
 
-    return int(math.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)+ .5)
+    return int(math.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)+ .5) #Updated to 3D
 
 def distL1((x1,y1), (x2,y2)):
     """Compute the L1-norm (Manhattan) distance between two points.

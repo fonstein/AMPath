@@ -137,7 +137,6 @@ class Path(object):
         for samp in self.path:
             path_vec.append(samp.vec)
 
-        #Draft.makeBSpline(path_vec, closed=False, face=False, support=None)
         Draft.makeWire(path_vec,closed=False,face=False,support=None)
 
     def calculate_dist(self, vec1, vec2):
@@ -242,7 +241,6 @@ class Path(object):
         self.path = path
         FreeCAD.Console.PrintMessage("\nGenerated TSP path.")
 
-
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
@@ -250,7 +248,7 @@ def main():
     p.generate_point_cloud()
 
     """Uncomment to display sampling"""
-    # p.display_sampling()
+    p.display_sampling()
 
     """Test for Path. Uncomment the deired path"""
     path = Path(p.point_cloud)

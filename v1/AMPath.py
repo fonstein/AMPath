@@ -5,7 +5,7 @@ import Draft
 import math
 import numpy as np
 import random
-import TSP_mod
+#import TSP_mod
 
 __title__ = "AMPath"
 __author__ = "Ingrid Fjordheim Onstein"
@@ -51,6 +51,8 @@ class SubObject(object):
         return ustep, vstep
 
     def sample_subObject(self):
+        FreeCAD.Console.PrintMessage("\nSampling initiated\n")
+
         pRange = self.subObject.ParameterRange
         umin = pRange[0]
         umax = pRange[1]
@@ -62,8 +64,8 @@ class SubObject(object):
         self.sampling.append(Sample(self.subObject, u, v))  #Add initial point
 
         # Uncomment for non-adaptiv sampling
-        [dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
-        [self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
+        #[dummy, self.vstep] = self.calibrate_step(u, v, 0.0, self.vstep, self.vdist)
+        #[self.ustep, dummy] = self.calibrate_step(u, v, self.ustep, 0.0, self.udist)
 
         while u < umax:
             while v < vmax:
@@ -78,9 +80,10 @@ class SubObject(object):
             u = u + self.ustep
             vec = self.subObject.valueAt(u, v)
             if self.subObject.isInside(vec, self.tolerance, True):
+                FreeCAD.Console.PrintMessage("\nAdding sample to sub object\n")
                 self.sampling.append(Sample(self.subObject, u, v))
 
-    def calculate_dist(self, (u1,v1), (u2,v2)):
+    def calculate_dist(self, u1, v1, u2, v2):
         vec1 = self.subObject.valueAt(u1,v1)
         vec2 = self.subObject.valueAt(u2,v2)
 
@@ -249,27 +252,27 @@ class Path(object):
 def main():
     FreeCAD.Console.PrintMessage("\n\n============== START ==============")
     p = PointCloud()
-    p.get_subObjects(10.0, 10.0)
+    p.get_subObjects(1000.0, 1000.0)
     p.generate_point_cloud()
 
     """Uncomment to display sampling"""
     # p.display_sampling()
 
     """Test for Path. Uncomment the deired path"""
-    path = Path(p.point_cloud)
+    # path = Path(p.point_cloud)
 
     """GREEDY"""
     # path.greedy_algorithm(path.point_cloud[0])
 
     """GREEDY WEIGHTED. Uncomment desired weighting. U-weighting is default."""
-    path.greedy_weighted(path.point_cloud[0], "u")
+    # path.greedy_weighted(path.point_cloud[0], "u")
     # path.greedy_weighted(path.point_cloud[0], "y")
 
     """TSP"""
     # path.TSP_path()
 
     """Display path"""
-    path.display_path()
+    # path.display_path()
 
 if __name__ == "__main__":
     main()

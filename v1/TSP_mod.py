@@ -3,7 +3,7 @@
 import math
 import random
 
-def distL2((x1,y1,z1), (x2,y2,z2)):
+def distL2(x1,y1,z1, x2,y2,z2):
     """Compute the L2-norm (Euclidean) distance between two points.
 
     The distance is rounded to the closest integer, for compatibility
@@ -14,7 +14,7 @@ def distL2((x1,y1,z1), (x2,y2,z2)):
 
     return int(math.sqrt((x2-x1)**2 + (y2-y1)**2 + (z2-z1)**2)+ .5) #Updated to 3D
 
-def distL1((x1,y1), (x2,y2)):
+def distL1(x1,y1, x2,y2):
     """Compute the L1-norm (Manhattan) distance between two points.
 
     The distance is rounded to the closest integer, for compatibility
@@ -56,7 +56,7 @@ def read_tsplib(filename):
     elif line.find("MAN_2D") != -1:
         dist = distL1
     else:
-        print "cannot deal with non-euclidean or non-manhattan distances"
+        print ("cannot deal with non-euclidean or non-manhattan distances")
         raise Exception
 
     while line.find("NODE_COORD_SECTION") == -1:
@@ -260,10 +260,10 @@ def run_TSP(coord):
     n, D = mk_matrix(coord, distL2) # create the distance matrix
     instance = "toy problem"
 
-    print "\n*** travelling salesman problem ***"
+    print ("\n*** travelling salesman problem ***")
 
     # greedy construction
-    print "greedy construction with nearest neighbor + local search"
+    print ("greedy construction with nearest neighbor + local search")
     for i in range(n):
         tour = nearest_neighbor(n, i, D)     # create a greedy tour, visiting city 'i' first
         z = length(tour, D)

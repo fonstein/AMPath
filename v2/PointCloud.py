@@ -2,10 +2,11 @@ import FreeCAD
 import FreeCADGui
 import Draft
 
-from SubObject import SubObject
+import socket
+import SubObject as subobj
 
-# import importlib as imp
-# imp.reload(SubObject)
+import importlib as imp
+imp.reload(subobj)
 
 class PointCloud(object):
     def __init__(self):
@@ -17,24 +18,20 @@ class PointCloud(object):
         tolerance = 10.0
 
         try:
-            FreeCAD.Console.PrintMessage("\ngetSubObjects in try\n")
-
             selected = FreeCADGui.Selection.getSelectionEx()
         except Exception as e:
             FreeCAD.Console.PrintError("\nNo object selected")
         else:
-            FreeCAD.Console.PrintMessage("\ngetSubObjects in else before\n")
             self.num_so = len(selected[0].SubObjects)
-            FreeCAD.Console.PrintMessage("\nKommer den hit? JA\n")
 
-            FreeCAD.Console.PrintMessage("\nNumber of sub objects: %s \n" % (self.num_so))
+            FreeCAD.Console.PrintMessage("\nNumber of sub objects: %s \n" % self.num_so)
 
             #Iterate over and sample selected sub objects
             for sub_object in selected[0].SubObjects:
-                sub = SubObject(sub_object, ustep, vstep, tolerance)
+                sub = subobj.SubObject(sub_object, ustep, vstep, tolerance)
                 FreeCAD.Console.PrintMessage(sub)
                 self.sub_objects.append(sub)
-            FreeCAD.Console.PrintMessage(self)
+
 
     def display_sampling(self):
         if len(self.point_cloud) > 0:

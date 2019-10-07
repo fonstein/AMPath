@@ -75,7 +75,7 @@ class Path(object):
                 y_weighted = False
 
             for sample in coord:
-                weight = 10.0
+                weight = 100.0
                 vec1 = current_sample.vec
                 vec2 = sample.vec
 

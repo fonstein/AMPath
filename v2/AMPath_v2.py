@@ -23,29 +23,29 @@ def main():
     p = cloud.PointCloud()
 
     """Sampler overlate(r) med gitt avstand i mm """
-    p.get_subObjects(1000.0, 1000.0)
+    p.get_subObjects(10.0, 10.0)
 
     """Setter sammen alle samples i en punktsky"""
-    # p.generate_point_cloud()
+    p.generate_point_cloud()
 
     """Uncomment to display sampling"""
     # p.display_sampling()
 
     """Test for Path. Uncomment the deired path"""
-    # path = Path(p.point_cloud)
+    path = pathgen.Path(p.point_cloud)
 
     """GREEDY"""
     # path.greedy_algorithm(path.point_cloud[0])
 
     """GREEDY WEIGHTED. Uncomment desired weighting. U-weighting is default."""
-    # path.greedy_weighted(path.point_cloud[0], "u")
+    path.greedy_weighted(path.point_cloud[0], "u")
     # path.greedy_weighted(path.point_cloud[0], "y")
 
     """TSP"""
     # path.TSP_path()
 
     """Display path"""
-    # path.display_path()
+    path.display_path()
 
 
 if __name__ == "__main__":

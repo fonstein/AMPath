@@ -3,6 +3,8 @@ import Draft
 import math
 
 import TSP_mod
+import importlib as imp
+imp.reload(TSP_mod)
 
 class Path(object):
     def __init__(self, point_cloud):
@@ -54,6 +56,7 @@ class Path(object):
         path = []  # Empty list for the path
 
         current_sample = sample
+        greedy_choice = current_sample
 
         coord.remove(current_sample)  # Removes the starting point from the list
         path.append(current_sample)  # Appends the starting point to the path
@@ -63,27 +66,16 @@ class Path(object):
         for n in range(n):
             current_dist = float("inf")
 
-            # Different types of weighting
-            if weighting == "u":
-                u_weighted = True
-                y_weighted = False
-            elif weighting == "y":
-                u_weighted = False
-                y_weighted = True
-            else:  # u-weighting is default
-                u_weighted = True
-                y_weighted = False
-
             for sample in coord:
                 weight = 100.0
                 vec1 = current_sample.vec
                 vec2 = sample.vec
 
-                if y_weighted:
+                if weighting == "y":
                     dist = math.sqrt(
-                        ((vec2.x) - vec1.x) ** 2 + ((vec2.y + weight) - vec1.y) ** 2 + (vec2.z - vec1.z) ** 2)
+                        (vec2.x - vec1.x) ** 2 + ((vec2.y + weight) - vec1.y) ** 2 + (vec2.z - vec1.z) ** 2)
 
-                if u_weighted:
+                else:
                     if sample.u != current_sample.u:
                         dist = self.calculate_dist(current_sample.vec, sample.vec) + weight
                     else:

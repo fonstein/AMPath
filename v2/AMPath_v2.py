@@ -31,7 +31,7 @@ def main():
     """Uncomment to display sampling"""
     # p.display_sampling()
 
-    """Test for Path. Uncomment the deired path"""
+    """Test for Path. Uncomment the desired path"""
     path = pathgen.Path(p.point_cloud)
 
     """GREEDY"""
